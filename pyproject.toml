@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aoc-toolkit"
+version = "1.0.4"
+description = "Reusable utilities for Advent of Code puzzles"
+readme = "README.md"
+authors = [{name = "Jeff Windsor"}]
+license = {text = "CC BY-NC-SA 4.0"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/jeffwindsor/aoc-toolkit"
+Repository = "https://github.com/jeffwindsor/aoc-toolkit"
+Documentation = "https://github.com/jeffwindsor/aoc-toolkit/blob/main/README.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "nox>=2024.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = [
+    "-v",
+    "--cov=src/aoc",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--strict-markers",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+show_missing = true

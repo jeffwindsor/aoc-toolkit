@@ -1,0 +1,8 @@
+# Exclude development/CI files from release archives
+.github/ export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+CLAUDE.md export-ignore
+CONTRIBUTING.md export-ignore
+scripts/ export-ignore
+noxfile.py export-ignore
