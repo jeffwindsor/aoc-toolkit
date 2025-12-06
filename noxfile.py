@@ -41,7 +41,7 @@ def coverage(session):
     session.log("Coverage report generated in htmlcov/index.html")
 
 
-@nox.session
+@nox.session(python=PYTHON_VERSIONS)
 def validate_imports(session):
     """Validate all three import styles work correctly."""
     session.install("-e", ".")
@@ -70,7 +70,7 @@ def validate_imports(session):
     session.log("✓ All import styles validated successfully")
 
 
-@nox.session
+@nox.session(python=PYTHON_VERSIONS)
 def validate_all(session):
     """Run full validation: imports + tests."""
     session.install("-e", ".")
