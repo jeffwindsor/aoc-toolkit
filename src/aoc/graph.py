@@ -4,7 +4,7 @@ from typing import Any, Callable
 from collections import deque
 from heapq import heappush, heappop
 from .coord import Coord
-from .grid import Grid, grid_contains_coord, grid_get
+from .grid import Grid
 
 
 def bfs(
@@ -59,29 +59,29 @@ def bfs(
 
 
 def dfs(
-    start: Coord,
-    neighbors_func: Callable[[Coord], list[Coord]],
-    goal_func: Callable[[Coord], bool],
-) -> list[Coord] | None:
+    start: Any,
+    neighbors_func: Callable[[Any], list[Any]],
+    goal_func: Callable[[Any], bool],
+) -> list[Any] | None:
     """
     Generic depth-first search algorithm.
     Optimized with parent tracking for O(n) time and memory complexity.
 
     Args:
-        start: Starting coordinate
-        neighbors_func: Function that returns valid neighbors for a coordinate
+        start: Starting state (Coord, tuple, or any hashable type)
+        neighbors_func: Function that returns valid neighbors for a state
         goal_func: Function to check if goal is reached
 
     Returns:
-        List of coordinates forming path to goal, or None if no path found
+        List of states forming path to goal, or None if no path found
 
     Note:
         Uses parent tracking and backtracking for efficient O(n) path construction,
         avoiding the O(n²) cost of incrementally building paths during search.
     """
-    stack: list[tuple[Coord, Coord | None]] = [(start, None)]  # (current, parent)
-    parent_map: dict[Coord, Coord | None] = {}
-    visited: set[Coord] = set()
+    stack = [(start, None)]  # (current, parent)
+    parent_map = {}
+    visited = set()
 
     while stack:
         current, parent = stack.pop()
@@ -108,6 +108,75 @@ def dfs(
     return None
 
 
+def _create_grid_search_functions(
+    grid: Grid,
+    end: Coord,
+    walkable_values: set[Any],
+) -> tuple[Callable[[Coord], list[Coord]], Callable[[Coord], bool]]:
+    """
+    Create neighbor and goal functions for grid pathfinding.
+
+    Shared logic extracted from bfs_grid_path and dfs_grid_path.
+
+    Args:
+        grid: Grid instance to search through
+        end: Goal coordinate
+        walkable_values: Set of grid values that can be traversed
+
+    Returns:
+        Tuple of (neighbors_func, goal_func) for use with generic search algorithms
+    """
+    def neighbors_func(coord: Coord) -> list[Coord]:
+        """Get valid neighboring coordinates in the grid."""
+        return [
+            neighbor
+            for direction in Coord.DIRECTIONS_CARDINAL
+            if (neighbor := coord + direction) in grid
+            and grid[neighbor] in walkable_values
+        ]
+
+    def goal_func(coord: Coord) -> bool:
+        """Check if we've reached the goal."""
+        return coord == end
+
+    return neighbors_func, goal_func
+
+
+def bfs_grid_path(
+    grid: Grid,
+    start: Coord,
+    end: Coord,
+    walkable_values: set[Any],
+) -> list[Coord]:
+    """
+    Convenience wrapper for breadth-first search through a grid maze.
+
+    This is a specialized interface to the generic bfs() function,
+    optimized for grid-based shortest pathfinding problems.
+
+    Args:
+        grid: Grid instance to search through
+        start: Starting coordinate
+        end: Goal coordinate
+        walkable_values: Set of grid values that can be traversed
+
+    Returns:
+        List of coordinates forming shortest path from start to end, or empty list if no path found
+
+    Example:
+        >>> maze = Grid([['#', '.', '#'], ['.', '.', '.'], ['#', '.', '#']])
+        >>> path = bfs_grid_path(maze, Coord(0,1), Coord(2,1), {'.'}  )
+        >>> len(path) > 0
+        True
+
+    Note:
+        BFS guarantees the shortest path in unweighted graphs.
+    """
+    neighbors_func, goal_func = _create_grid_search_functions(grid, end, walkable_values)
+    result = bfs(start, neighbors_func, goal_func)
+    return result if isinstance(result, list) else []
+
+
 def dfs_grid_path(
     grid: Grid,
     start: Coord,
@@ -121,7 +190,7 @@ def dfs_grid_path(
     optimized for grid-based pathfinding problems.
 
     Args:
-        grid: 2D grid to search through
+        grid: Grid instance to search through
         start: Starting coordinate
         end: Goal coordinate
         walkable_values: Set of grid values that can be traversed
@@ -130,32 +199,17 @@ def dfs_grid_path(
         List of coordinates forming path from start to end, or empty list if no path found
 
     Example:
-        >>> maze = [['#', '.', '#'], ['.', '.', '.'], ['#', '.', '#']]
+        >>> maze = Grid([['#', '.', '#'], ['.', '.', '.'], ['#', '.', '#']])
         >>> path = dfs_grid_path(maze, Coord(0,1), Coord(2,1), {'.'}  )
         >>> len(path) > 0
         True
 
     Note:
+        DFS does not guarantee the shortest path. Use bfs_grid_path for shortest paths.
         This wrapper uses the generic dfs() implementation with parent tracking
         for efficient O(n) time and memory complexity.
     """
-    def neighbors_func(coord: Coord) -> list[Coord]:
-        """Get valid neighboring coordinates in the grid."""
-        neighbors = []
-        for direction in Coord.DIRECTIONS_CARDINAL:
-            next_position = coord + direction
-            if (
-                grid_contains_coord(grid, next_position)
-                and grid_get(grid, next_position) in walkable_values
-            ):
-                neighbors.append(next_position)
-        return neighbors
-
-    def goal_func(coord: Coord) -> bool:
-        """Check if we've reached the goal."""
-        return coord == end
-
-    # Use the generic dfs implementation
+    neighbors_func, goal_func = _create_grid_search_functions(grid, end, walkable_values)
     result = dfs(start, neighbors_func, goal_func)
     return result if result is not None else []
 
@@ -265,6 +319,7 @@ def find_max_clique(graph: dict[Any, set[Any]]) -> set[Any]:
 __all__ = [
     "bfs",
     "dfs",
+    "bfs_grid_path",
     "dfs_grid_path",
     "dijkstra",
     "find_max_clique",

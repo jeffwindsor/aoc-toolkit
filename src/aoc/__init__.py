@@ -1,40 +1,30 @@
 """
-AOC Toolkit - Reusable utilities for Advent of Code puzzles.
+Advent of Code 2024 Utilities
 
-License: CC BY-NC-SA 4.0
-Documentation: https://github.com/jeffwindsor/aoc-toolkit
-
-Modules:
-- coord: Coordinate class and direction utilities
-- grid: 2D grid operations
+Organized into modules but accessible from top level for convenience:
+- coord: Coordinate class and utilities
+- grid: Matrix/grid operations
 - graph: Graph algorithms (BFS, DFS, Dijkstra, max clique)
-- data: Data reading and parsing utilities
-- math: Mathematical utility functions
-- testing: Test framework with performance metrics
+- input: Data reading and parsing (Input and Parser classes)
+- math: Number/math utilities
+- testing: Test framework
 
-Import Styles (both supported):
+Import styles supported:
+    # Simple (recommended for puzzles)
+    from aoc import Coord, bfs, Input, run, TestCase
 
-    # Flat imports (convenient for scripts)
-    from aoc import Coord, bfs, read_data_as_lines, run, TestCase
-
-    # Explicit module imports (recommended for libraries/shared code)
+    # Explicit (optional for clarity)
     from aoc.coord import Coord
     from aoc.graph import bfs
-    from aoc.data import read_data_as_lines
+    from aoc.input import Input, Parser
     from aoc.testing import run, TestCase
-
-    # Namespace imports (most explicit)
-    import aoc.coord
-    import aoc.graph
-    pos = aoc.coord.Coord(0, 0)
-    distances = aoc.graph.bfs(start, neighbors)
 """
 
 # Re-export everything for backward compatibility
 from .coord import *
 from .grid import *
 from .graph import *
-from .data import *
+from .input import *
 from .math import *
 from .testing import *
 
@@ -45,35 +35,18 @@ __all__ = [
     "filter_coords_in_bounds",
     # From grid
     "Grid",
-    "grid_size",
-    "grid_max_bounds",
-    "grid_contains_coord",
-    "grid_get",
-    "grid_set",
-    "find_first",
-    "find_all",
-    "grid_coords",
-    "search_in_direction",
-    "group_by_value",
-    "create_visited_grid",
-    "create_grid",
     # From graph
     "bfs",
     "dfs",
+    "bfs_grid_path",
     "dfs_grid_path",
     "dijkstra",
     "find_max_clique",
-    # From data
-    "read_data",
-    "read_data_as_lines",
-    "read_data_as_ints",
-    "read_data_as_char_grid",
-    "read_data_as_int_grid",
-    "read_data_as_coord_pairs",
-    "read_data_as_graph_edges",
-    "read_data_as_sections",
-    "read_data_as_columns",
+    # From input
+    "Input",
+    "Parser",
     "extract_ints",
+    "extract_pattern",
     # From math
     "count_continuous_segments",
     "count_digits",

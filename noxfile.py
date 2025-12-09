@@ -3,7 +3,7 @@
 import nox
 
 # Python versions to test
-PYTHON_VERSIONS = ["3.10", "3.11", "3.12"]
+PYTHON_VERSIONS = ["3.10", "3.11", "3.12", "3.14"]
 
 # Default sessions when running `nox` without arguments
 nox.options.sessions = ["tests"]
