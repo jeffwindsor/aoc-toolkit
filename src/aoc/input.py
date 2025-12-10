@@ -15,7 +15,9 @@ Supported Parsing Scenarios
 **Column-based parsing** - ``as_columns()``
     Parse whitespace-separated values into columns (transpose rows to columns).
 
-    Example: ``"3   4\\n8   10"`` → ``[(3, 8), (4, 10)]``
+    Example: ``"3   4\\n8   10"`` → ``[('3', '8'), ('4', '10')]``
+
+    With converter: ``as_columns(converter=int)`` → ``[(3, 8), (4, 10)]``
 
 **Line-by-line data** - ``as_lines()``
     Split content into list of strings, one per line.
@@ -423,24 +425,30 @@ class Input:
         )
 
     def as_columns(
-        self, separator: str | None = None, converter: type = int
+        self, separator: str | None = None, converter: type = None
     ) -> list[tuple]:
         """
         Parse content as columns (transpose rows to columns).
 
         Args:
             separator: Delimiter between values (default: whitespace)
-            converter: Type function to apply to each value (default: int)
+            converter: Type function to apply to each value (default: None, no conversion)
 
         Returns:
             List of tuples, one per column
 
-        Example:
+        Examples:
             >>> Input.from_string("1 2 3\\n4 5 6").as_columns()
+            [('1', '4'), ('2', '5'), ('3', '6')]
+
+            >>> Input.from_string("1 2 3\\n4 5 6").as_columns(converter=int)
             [(1, 4), (2, 5), (3, 6)]
         """
         lines = self.as_lines()
-        rows = [list(map(converter, line.split(separator))) for line in lines]
+        if converter is None:
+            rows = [line.split(separator) for line in lines]
+        else:
+            rows = [list(map(converter, line.split(separator))) for line in lines]
         return list(zip(*rows))
 
     def as_coords(self, separator: str = ",") -> list[Coord]:

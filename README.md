@@ -94,7 +94,8 @@ input.as_coords(separator=",")     # Custom separator
 ```python
 input.as_delimited_lines()          # "1,2,3\n4,5,6" → [[1,2,3], [4,5,6]]
 input.as_delimited_lines(";", str)  # Custom separator and type
-input.as_columns()                  # Transpose rows to columns
+input.as_columns()                  # "1 2\n3 4" → [('1','3'), ('2','4')]
+input.as_columns(converter=int)     # "1 2\n3 4" → [(1,3), (2,4)]
 ```
 
 **Key-Value Pairs**

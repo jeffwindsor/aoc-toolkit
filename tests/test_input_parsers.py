@@ -646,9 +646,9 @@ class TestColumnsMethods(unittest.TestCase):
     """Tests for as_columns parsing method."""
 
     def test_as_columns_basic(self):
-        """Test as_columns with default whitespace separator."""
+        """Test as_columns with default whitespace separator and int converter."""
         parser = Input.from_string("1 2 3\n4 5 6\n7 8 9")
-        result = parser.as_columns()
+        result = parser.as_columns(converter=int)
 
         self.assertIsInstance(result, list)
         self.assertEqual(len(result), 3)  # 3 columns
@@ -657,9 +657,9 @@ class TestColumnsMethods(unittest.TestCase):
         self.assertEqual(result[2], (3, 6, 9))  # Third column
 
     def test_as_columns_custom_separator(self):
-        """Test as_columns with custom separator."""
+        """Test as_columns with custom separator and int converter."""
         parser = Input.from_string("1,2,3\n4,5,6")
-        result = parser.as_columns(separator=",")
+        result = parser.as_columns(separator=",", converter=int)
 
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0], (1, 4))
@@ -669,19 +669,50 @@ class TestColumnsMethods(unittest.TestCase):
     def test_as_columns_two_columns(self):
         """Test as_columns with two columns (common AOC pattern)."""
         parser = Input.from_string("3   4\n8   10\n5   9")
-        result = parser.as_columns(separator="   ")
+        result = parser.as_columns(separator="   ", converter=int)
 
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], (3, 8, 5))
         self.assertEqual(result[1], (4, 10, 9))
 
     def test_as_columns_single_column(self):
-        """Test as_columns with single column."""
+        """Test as_columns with single column and int converter."""
         parser = Input.from_string("1\n2\n3")
-        result = parser.as_columns()
+        result = parser.as_columns(converter=int)
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0], (1, 2, 3))
+
+    def test_as_columns_no_converter(self):
+        """Test as_columns with no converter (default behavior returns strings)."""
+        parser = Input.from_string("1 2 3\n4 5 6")
+        result = parser.as_columns()
+
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], ('1', '4'))  # Strings, not ints
+        self.assertEqual(result[1], ('2', '5'))
+        self.assertEqual(result[2], ('3', '6'))
+
+        # Verify types are strings
+        self.assertIsInstance(result[0][0], str)
+
+    def test_as_columns_float_converter(self):
+        """Test as_columns with float converter."""
+        parser = Input.from_string("1.5 2.7\n3.2 4.8")
+        result = parser.as_columns(converter=float)
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], (1.5, 3.2))
+        self.assertEqual(result[1], (2.7, 4.8))
+        self.assertIsInstance(result[0][0], float)
+
+    def test_as_columns_lambda_converter(self):
+        """Test as_columns with lambda converter."""
+        parser = Input.from_string("1 2\n3 4")
+        result = parser.as_columns(converter=lambda x: int(x) * 10)
+
+        self.assertEqual(result[0], (10, 30))
+        self.assertEqual(result[1], (20, 40))
 
 
 class TestCoordPairsMethods(unittest.TestCase):
