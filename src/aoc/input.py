@@ -114,8 +114,7 @@ Input
 
 from collections import defaultdict
 from re import findall, error, search
-from .coord import Coord
-from .grid import Grid
+from .d2 import Coord, Grid
 
 
 def extract_ints(text: str, pattern: str = r"-?\d+") -> list[int]:
@@ -169,6 +168,81 @@ def extract_pattern(text: str, pattern: str) -> list[str]:
         return findall(pattern, text)
     except error as e:
         raise ValueError(f"Invalid regex pattern: {e}")
+
+
+def pattern_to_bools(text: str, true_char: str = '#') -> list[bool]:
+    """
+    Convert character pattern to boolean list.
+
+    Args:
+        text: String pattern (e.g., ".##.#")
+        true_char: Character representing True (default: '#')
+
+    Returns:
+        List of booleans
+
+    Examples:
+        >>> pattern_to_bools(".##.#")
+        [False, True, True, False, True]
+        >>> pattern_to_bools("..##", true_char='#')
+        [False, False, True, True]
+        >>> pattern_to_bools("0110", true_char='1')
+        [False, True, True, False]
+    """
+    return [c == true_char for c in text]
+
+
+def extract_bracketed(text: str) -> str | None:
+    """
+    Extract content from square brackets [...].
+
+    Args:
+        text: Text to extract from
+
+    Returns:
+        Content inside first square brackets, or None if not found
+
+    Example:
+        >>> extract_bracketed("[.##.#] data")
+        '.##.#'
+    """
+    match = search(r"\[([^\]]+)\]", text)
+    return match.group(1) if match else None
+
+
+def extract_parenthesized(text: str) -> list[str]:
+    """
+    Extract all content from parentheses (...).
+
+    Args:
+        text: Text to extract from
+
+    Returns:
+        List of all content inside parentheses
+
+    Example:
+        >>> extract_parenthesized("(1,2) text (3,4)")
+        ['1,2', '3,4']
+    """
+    return findall(r"\(([^\)]+)\)", text)
+
+
+def extract_braced(text: str) -> str | None:
+    """
+    Extract content from curly braces {...}.
+
+    Args:
+        text: Text to extract from
+
+    Returns:
+        Content inside first curly braces, or None if not found
+
+    Example:
+        >>> extract_braced("data {3,5,4}")
+        '3,5,4'
+    """
+    match = search(r"\{([^\}]+)\}", text)
+    return match.group(1) if match else None
 
 
 def parse(content: str, sep: str | None, skip_empty: bool = True, strip: bool = True) -> list[str]:
@@ -630,4 +704,13 @@ class Input:
         ]
 
 
-__all__ = ["Input", "extract_ints", "extract_pattern", "parse"]
+__all__ = [
+    "Input",
+    "extract_ints",
+    "extract_pattern",
+    "pattern_to_bools",
+    "extract_bracketed",
+    "extract_parenthesized",
+    "extract_braced",
+    "parse",
+]

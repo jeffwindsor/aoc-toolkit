@@ -56,7 +56,33 @@ def count_digits(n: int) -> int:
     return count
 
 
+def calculate_toggle_states(toggles: list[int], size: int) -> list[bool]:
+    """
+    Calculate final states after multiple toggles.
+
+    Each element in toggles represents an index to toggle. An element
+    is ON if toggled an odd number of times (parity-based).
+
+    Args:
+        toggles: List of indices that were toggled
+        size: Total number of elements
+
+    Returns:
+        List of final boolean states (True = ON)
+
+    Examples:
+        >>> calculate_toggle_states([0, 1, 0, 2], 3)
+        [False, True, True]
+        >>> calculate_toggle_states([1, 3, 2, 3], 5)
+        [False, True, True, False, False]
+    """
+    from collections import Counter
+    counts = Counter(toggles)
+    return [counts.get(i, 0) % 2 == 1 for i in range(size)]
+
+
 __all__ = [
     "count_continuous_segments",
     "count_digits",
+    "calculate_toggle_states",
 ]

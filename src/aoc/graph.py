@@ -3,8 +3,7 @@
 from typing import Any, Callable
 from collections import deque
 from heapq import heappush, heappop
-from .coord import Coord
-from .grid import Grid
+from .d2 import Coord, Grid
 
 
 def bfs(
@@ -263,6 +262,168 @@ def dijkstra(
     return distances
 
 
+def flood_fill(
+    grid: Grid,
+    start: Coord,
+    walkable_values: set[Any],
+    directions: list[Coord] | None = None,
+) -> set[Coord]:
+    """
+    Non-destructive flood fill that returns all reachable coordinates.
+
+    Uses BFS to explore all cells reachable from start position through
+    walkable cells. Does not modify the grid.
+
+    Args:
+        grid: Grid instance to search through
+        start: Starting coordinate for flood fill
+        walkable_values: Set of grid values that can be traversed
+        directions: Direction vectors to use (default: DIRECTIONS_CARDINAL for 4-way)
+
+    Returns:
+        Set of all coordinates reachable from start (empty set if start invalid)
+
+    Example:
+        >>> grid = Grid([['#', '.', '#'], ['.', '.', '.'], ['#', '.', '#']])
+        >>> visited = flood_fill(grid, Coord(1, 1), {'.'})
+        >>> len(visited)
+        5
+
+    Note:
+        For in-place marking of visited cells, use flood_fill_mark() instead.
+    """
+    if start not in grid or grid[start] not in walkable_values:
+        return set()
+
+    directions = directions or Coord.DIRECTIONS_CARDINAL
+
+    def neighbors_func(coord: Coord) -> list[Coord]:
+        return [
+            neighbor
+            for direction in directions
+            if (neighbor := coord + direction) in grid
+            and grid[neighbor] in walkable_values
+        ]
+
+    distances = bfs(start, neighbors_func)
+    return set(distances.keys())
+
+
+def flood_fill_mark(
+    grid: Grid,
+    start: Coord,
+    walkable_values: set[Any],
+    mark_value: Any,
+    directions: list[Coord] | None = None,
+) -> int:
+    """
+    Destructive flood fill that marks all reachable coordinates in-place.
+
+    Uses flood_fill() to find reachable cells, then modifies the grid by
+    setting all visited cells to mark_value.
+
+    Args:
+        grid: Grid instance to modify
+        start: Starting coordinate for flood fill
+        walkable_values: Set of grid values that can be traversed
+        mark_value: Value to mark visited cells with
+        directions: Direction vectors to use (default: DIRECTIONS_CARDINAL for 4-way)
+
+    Returns:
+        Count of cells marked (0 if start invalid or no cells reachable)
+
+    Example:
+        >>> grid = Grid([['#', '.', '#'], ['.', '.', '.'], ['#', '.', '#']])
+        >>> count = flood_fill_mark(grid, Coord(1, 1), {'.'}, 'X')
+        >>> count
+        5
+        >>> grid[Coord(1, 1)]
+        'X'
+
+    Note:
+        This modifies the grid in-place. For non-destructive analysis,
+        use flood_fill() instead.
+    """
+    visited = flood_fill(grid, start, walkable_values, directions)
+
+    for coord in visited:
+        grid[coord] = mark_value
+
+    return len(visited)
+
+
+def count_paths_dag(
+    start: Any,
+    target: Any,
+    neighbors_func: Callable[[Any], list[Any]],
+) -> int:
+    """
+    Count all paths from start to target in a directed acyclic graph (DAG).
+
+    Uses memoization for efficient counting. Assumes the graph is acyclic.
+
+    Args:
+        start: Starting node
+        target: Target node
+        neighbors_func: Function that returns list of neighbor nodes
+
+    Returns:
+        Number of distinct paths from start to target
+
+    Example:
+        >>> graph = {'A': ['B', 'C'], 'B': ['D'], 'C': ['D'], 'D': []}
+        >>> count_paths_dag('A', 'D', lambda n: graph.get(n, []))
+        2
+    """
+    from functools import lru_cache
+
+    @lru_cache(maxsize=None)
+    def count(current):
+        if current == target:
+            return 1
+        return sum(count(neighbor) for neighbor in neighbors_func(current))
+
+    return count(start)
+
+
+def count_paths_cyclic(
+    start: Any,
+    target: Any,
+    neighbors_func: Callable[[Any], list[Any]],
+) -> int:
+    """
+    Count all paths from start to target in a graph that may contain cycles.
+
+    Uses backtracking to avoid revisiting nodes within the same path.
+
+    Args:
+        start: Starting node
+        target: Target node
+        neighbors_func: Function that returns list of neighbor nodes
+
+    Returns:
+        Number of distinct paths from start to target
+
+    Example:
+        >>> graph = {'A': ['B', 'C'], 'B': ['C'], 'C': ['A', 'D'], 'D': []}
+        >>> count_paths_cyclic('A', 'D', lambda n: graph.get(n, []))
+        2
+    """
+    def count(current, visited):
+        if current == target:
+            return 1
+        visited.add(current)
+        total = sum(
+            count(neighbor, visited)
+            for neighbor in neighbors_func(current)
+            if neighbor not in visited
+        )
+        visited.remove(current)
+        return total
+
+    return count(start, set())
+
+
 def find_max_clique(graph: dict[Any, set[Any]]) -> set[Any]:
     """
     Find the largest clique (fully-connected subgraph) using Bron-Kerbosch algorithm.
@@ -316,11 +477,62 @@ def find_max_clique(graph: dict[Any, set[Any]]) -> set[Any]:
     return max(cliques, key=len) if cliques else set()
 
 
+class UnionFind:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+        self.size = [1] * n
+
+    def find(self, x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+
+    def union(self, x, y):
+        root_x = self.find(x)
+        root_y = self.find(y)
+
+        if root_x == root_y:
+            return False
+
+        if self.rank[root_x] < self.rank[root_y]:
+            self.parent[root_x] = root_y
+            self.size[root_y] += self.size[root_x]
+        elif self.rank[root_x] > self.rank[root_y]:
+            self.parent[root_y] = root_x
+            self.size[root_x] += self.size[root_y]
+        else:
+            self.parent[root_y] = root_x
+            self.size[root_x] += self.size[root_y]
+            self.rank[root_x] += 1
+
+        return True
+
+    def get_component_sizes(self):
+        sizes = {}
+        for i in range(len(self.parent)):
+            root = self.find(i)
+            if root not in sizes:
+                sizes[root] = self.size[root]
+        return list(sizes.values())
+
+    def count_components(self):
+        roots = set()
+        for i in range(len(self.parent)):
+            roots.add(self.find(i))
+        return len(roots)
+
+
 __all__ = [
     "bfs",
     "dfs",
     "bfs_grid_path",
     "dfs_grid_path",
+    "flood_fill",
+    "flood_fill_mark",
     "dijkstra",
+    "count_paths_dag",
+    "count_paths_cyclic",
     "find_max_clique",
+    "UnionFind",
 ]

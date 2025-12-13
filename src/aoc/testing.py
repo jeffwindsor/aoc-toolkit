@@ -57,18 +57,23 @@ def format_memory(bytes_used: int) -> str:
 
 @dataclass
 class TestCase:
-    """A single test case with data file and expected output."""
+    """A single test case with function arguments and expected output.
 
-    data_file: str
-    expected: Any
+    Args can be:
+    - A single string (file path): TestCase("data/01_example_01", expected=42)
+    - A list of arguments: TestCase(["data/01_example_01", 10], expected=42)
+    """
+
+    args: str | list[Any]
+    expected: Any = None
 
 
-def run(func: Callable[[str], Any], test_cases: list[TestCase]) -> None:
+def run(func: Callable[..., Any], test_cases: list[TestCase]) -> None:
     """
     Execute test cases for a given function and report results with performance metrics.
 
     Args:
-        func: Function to test (takes string data_file, returns any value)
+        func: Function to test (takes variadic arguments, returns any value)
         test_cases: List of TestCase objects
 
     The function prints colored output:
@@ -90,7 +95,8 @@ def run(func: Callable[[str], Any], test_cases: list[TestCase]) -> None:
                 start_time = time.perf_counter()
 
             # Execute test
-            actual = func(test_case.data_file)
+            args = [test_case.args] if isinstance(test_case.args, str) else test_case.args
+            actual = func(*args)
 
             # Capture and format metrics (if enabled)
             if PERF_ENABLED:
@@ -105,20 +111,22 @@ def run(func: Callable[[str], Any], test_cases: list[TestCase]) -> None:
                 metrics = ""
 
             # Report results
+            display_path = test_case.args if isinstance(test_case.args, str) else test_case.args[0]
             if test_case.expected == actual:
-                print(f"  {test_case.data_file}: {TRUE_COLOR}{actual}{metrics}{END_COLOR}")
+                print(f"  {display_path}: {TRUE_COLOR}{actual}{metrics}{END_COLOR}")
                 passed += 1
             else:
                 print(
-                    f"  {test_case.data_file}: {FALSE_COLOR}Expected {test_case.expected} but actual is {actual}{metrics}{END_COLOR}"
+                    f"  {display_path}: {FALSE_COLOR}Expected {test_case.expected} but actual is {actual}{metrics}{END_COLOR}"
                 )
                 failed += 1
         except Exception as e:
             # Stop tracking on error (if enabled)
             if PERF_ENABLED and tracemalloc.is_tracing():
                 tracemalloc.stop()
+            display_path = test_case.args if isinstance(test_case.args, str) else test_case.args[0]
             print(
-                f"  {test_case.data_file}: {FALSE_COLOR}ERROR: {type(e).__name__}: {e}{END_COLOR}"
+                f"  {display_path}: {FALSE_COLOR}ERROR: {type(e).__name__}: {e}{END_COLOR}"
             )
             failed += 1
 

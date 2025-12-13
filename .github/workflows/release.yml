@@ -8,10 +8,12 @@ on:
 jobs:
   # First, run all tests
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.14"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
     - uses: actions/checkout@v4
@@ -21,14 +23,27 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install package
+    - name: Install nox
       run: |
         python -m pip install --upgrade pip
-        pip install -e .
+        pip install nox
 
-    - name: Run tests
+    - name: Run tests with nox
       run: |
-        python -m unittest discover -s tests -p "test_*.py" -v
+        nox -s validate_all --python ${{ matrix.python-version }}
+
+    - name: Notify on test failure
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `Release test failure - Python ${{ matrix.python-version }} on ${{ matrix.os }}`,
+            body: `Release workflow **${{ github.workflow }}** test failed.\n\n**Details:**\n- Tag: ${{ github.ref }}\n- Python: ${{ matrix.python-version }}\n- OS: ${{ matrix.os }}\n- Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            labels: ['bug', 'release-blocker']
+          })
 
   # Only create release if tests pass
   release:
@@ -47,17 +62,17 @@ jobs:
     - name: Extract changelog for this version
       id: changelog
       run: |
-        # Extract changelog section for this version from README.md
+        # Extract changelog section for this version from CHANGELOG.md
         VERSION="${{ steps.version.outputs.VERSION }}"
 
-        # Create a temporary file for the changelog
-        cat README.md | awk "/^### v${VERSION}/,/^### v[0-9]|^##[^#]/" | sed '/^### v[0-9]/d' | sed '/^##[^#]/d' > /tmp/changelog.txt
+        # Extract content between version headers
+        awk "/^## \[${VERSION}\]/,/^## \[/ {print}" CHANGELOG.md | head -n -1 > /tmp/changelog.txt
 
-        # If changelog is empty, use a default message
+        # If changelog is empty or file doesn't exist, use a default message
         if [ ! -s /tmp/changelog.txt ]; then
           echo "Release v${VERSION}" > /tmp/changelog.txt
           echo "" >> /tmp/changelog.txt
-          echo "See [README.md](https://github.com/${{ github.repository }}/blob/v${VERSION}/README.md) for details." >> /tmp/changelog.txt
+          echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/v${VERSION}/CHANGELOG.md) for details." >> /tmp/changelog.txt
         fi
 
         echo "CHANGELOG_FILE=/tmp/changelog.txt" >> $GITHUB_OUTPUT
@@ -76,3 +91,16 @@ jobs:
       run: |
         echo "Release v${{ steps.version.outputs.VERSION }} created successfully!"
         echo "Users can install with: pip install git+https://github.com/${{ github.repository }}.git@v${{ steps.version.outputs.VERSION }}"
+
+    - name: Notify on release failure
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `Release creation failed for v${{ steps.version.outputs.VERSION }}`,
+            body: `Release workflow **${{ github.workflow }}** failed during release creation.\n\n**Details:**\n- Tag: ${{ github.ref }}\n- Version: v${{ steps.version.outputs.VERSION }}\n- Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\n**Action Required:** Manual intervention needed to complete release.`,
+            labels: ['bug', 'release-blocker']
+          })

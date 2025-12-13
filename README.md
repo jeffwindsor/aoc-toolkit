@@ -41,7 +41,7 @@ pip install -e ".[dev]"
 ## Requirements
 
 - Python 3.10 or higher
-- Supports Python 3.10, 3.11, 3.12, and 3.14
+- Supports Python 3.10, 3.11, 3.12, 3.13, and 3.14
 
 ## Quick Start
 
