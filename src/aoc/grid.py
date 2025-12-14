@@ -96,7 +96,7 @@ class Grid:
             True if the target string is found in the specified direction
         """
         for i, char in enumerate(target):
-            coord = Coord(start.row + i * direction.row, start.col + i * direction.col)
+            coord = Coord(start.x + i * direction.x, start.y + i * direction.y)
             if coord not in self or self[coord] != char:
                 return False
         return True

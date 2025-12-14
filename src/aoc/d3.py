@@ -81,8 +81,8 @@ class Dimension:
 
 # Direction constants as class attributes
 Coord.ZERO = Coord(0, 0, 0)
-Coord.UP = Coord(0, 1, 0)
-Coord.DOWN = Coord(0, -1, 0)
+Coord.UP = Coord(0, -1, 0)
+Coord.DOWN = Coord(0, 1, 0)
 Coord.LEFT = Coord(-1, 0, 0)
 Coord.RIGHT = Coord(1, 0, 0)
 Coord.FORWARD = Coord(0, 0, 1)
@@ -120,11 +120,11 @@ class Grid:
 
     def __getitem__(self, coord: Coord) -> Any:
         """Access grid value using coordinate: grid[coord]."""
-        return self.data[coord.x][coord.y][coord.z]
+        return self.data[coord.z][coord.y][coord.x]
 
     def __setitem__(self, coord: Coord, value: Any) -> None:
         """Set grid value using coordinate: grid[coord] = value."""
-        self.data[coord.x][coord.y][coord.z] = value
+        self.data[coord.z][coord.y][coord.x] = value
 
     def __contains__(self, coord: Coord) -> bool:
         """Check if coordinate is within bounds: coord in grid."""
@@ -136,11 +136,13 @@ class Grid:
         if not self.data:
             return Dimension(0, 0, 0)
         if not self.data[0]:
-            return Dimension(len(self.data), 0, 0)
+            return Dimension(0, 0, len(self.data))
+        if not self.data[0][0]:
+            return Dimension(0, len(self.data[0]), len(self.data))
         return Dimension(
-            width=len(self.data),
-            height=len(self.data[0]) if self.data else 0,
-            depth=len(self.data[0][0]) if self.data and self.data[0] else 0,
+            width=len(self.data[0][0]),
+            height=len(self.data[0]),
+            depth=len(self.data),
         )
 
     @property
@@ -201,8 +203,8 @@ class Grid:
             Grid instance initialized with the specified value
         """
         data = [
-            [[initial_value] * size.depth for _ in range(size.height)]
-            for _ in range(size.width)
+            [[initial_value] * size.width for _ in range(size.height)]
+            for _ in range(size.depth)
         ]
         return Grid(data)
 

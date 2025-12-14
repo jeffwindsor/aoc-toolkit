@@ -47,7 +47,10 @@ pip install -e ".[dev]"
 
 ```python
 # Flat imports (recommended)
-from aoc import Input, Grid, Coord, bfs, dijkstra, TestCase, run
+from aoc import (
+    Input, Grid, Coord, bfs, dijkstra, TestCase, run,
+    merge_ranges, gcd, lcm, is_prime
+)
 
 # Explicit 2D imports (optional)
 from aoc.d2 import Coord, Grid, Dimension
@@ -58,6 +61,8 @@ from aoc.d3 import Coord, Grid, Dimension
 # Module imports
 from aoc.input import Input
 from aoc.graph import bfs, dijkstra
+from aoc.ranges import merge_ranges, intersect_ranges
+from aoc.math import gcd, lcm, is_prime
 ```
 
 ## API Reference
@@ -282,10 +287,10 @@ flood_fill_mark(grid, start, 'X', {'.', 'O'})    # Marks region with 'X'
 **Path Counting**
 ```python
 # DAG path counting (memoized, efficient)
-count = count_paths_dag(start, neighbors_func, goal_func)
+count = count_paths_dag(start, neighbors_func, lambda n: n == goal)
 
 # Cyclic graph path counting (backtracking)
-count = count_paths_cyclic(start, neighbors_func, goal_func)
+count = count_paths_cyclic(start, neighbors_func, lambda n: n == goal)
 ```
 
 **Max Clique - Find largest fully-connected subgraph**
@@ -327,6 +332,7 @@ def state_neighbors(state):
 
 Common mathematical operations for puzzles.
 
+**Basic Number Operations**
 ```python
 from aoc import count_continuous_segments, count_digits, calculate_toggle_states
 
@@ -338,9 +344,101 @@ count_digits(12345)                 # 5
 count_digits(0)                     # 1
 
 # Calculate final toggle states (parity-based)
-toggles = {1: 3, 2: 2, 3: 1}        # Position: toggle count
+toggles = [1, 3, 2, 3]              # Indices toggled
 states = calculate_toggle_states(toggles, 5)  # 5 positions
-# Returns: {1: True, 2: False, 3: True, 4: False, 5: False}
+# Returns: [False, True, True, False, False]
+```
+
+**GCD and LCM**
+```python
+from aoc import gcd, lcm, gcd_multiple, lcm_multiple
+
+# Greatest Common Divisor
+gcd(12, 8)                          # 4
+gcd(17, 19)                         # 1
+
+# Least Common Multiple
+lcm(12, 8)                          # 24
+lcm(3, 5)                           # 15
+
+# Multiple numbers
+gcd_multiple([12, 18, 24])          # 6
+lcm_multiple([2, 3, 4])             # 12
+```
+
+**Prime Numbers**
+```python
+from aoc import is_prime, primes_up_to, prime_factors
+
+# Check if prime
+is_prime(17)                        # True
+is_prime(4)                         # False
+
+# Generate primes
+primes_up_to(20)                    # [2, 3, 5, 7, 11, 13, 17, 19]
+
+# Prime factorization
+prime_factors(12)                   # {2: 2, 3: 1}  (2² × 3¹)
+prime_factors(100)                  # {2: 2, 5: 2}  (2² × 5²)
+```
+
+**Modular Arithmetic**
+```python
+from aoc import mod_inverse, chinese_remainder_theorem
+
+# Modular multiplicative inverse
+mod_inverse(3, 11)                  # 4  (3 × 4 ≡ 1 mod 11)
+
+# Chinese Remainder Theorem
+# Solve: x ≡ 2 (mod 3), x ≡ 3 (mod 4), x ≡ 1 (mod 5)
+chinese_remainder_theorem([2, 3, 1], [3, 4, 5])  # 11
+```
+
+### Ranges - Interval operations
+
+Range and interval operations for scheduling, overlaps, and coverage problems.
+
+**Merging and Intersection**
+```python
+from aoc import merge_ranges, intersect_ranges
+
+# Merge overlapping/adjacent ranges
+merge_ranges([(1, 5), (3, 7), (10, 15)])  # [(1, 7), (10, 15)]
+merge_ranges([(1, 3), (4, 6), (7, 9)])    # [(1, 9)]
+
+# Find intersection
+intersect_ranges((1, 5), (3, 7))    # (3, 5)
+intersect_ranges((1, 3), (5, 7))    # None
+```
+
+**Range Operations**
+```python
+from aoc import subtract_range, range_contains, range_overlaps
+
+# Subtract one range from another
+subtract_range((1, 10), (5, 7))     # [(1, 4), (8, 10)]
+subtract_range((1, 10), (5, 15))    # [(1, 4)]
+
+# Check containment
+range_contains((1, 10), (3, 7))     # True
+range_contains((1, 10), (5, 15))    # False
+
+# Check overlap
+range_overlaps((1, 5), (3, 7))      # True
+range_overlaps((1, 3), (5, 7))      # False
+```
+
+**Coverage Analysis**
+```python
+from aoc import range_length, total_coverage
+
+# Length of a range
+range_length((1, 5))                # 5
+range_length((10, 10))              # 1
+
+# Total coverage after merging
+total_coverage([(1, 5), (3, 7)])    # 7
+total_coverage([(1, 3), (5, 7), (10, 12)])  # 9
 ```
 
 ### Testing - Test framework
@@ -393,6 +491,8 @@ Current version: **3.0.0**
 - 3D coordinate and grid support
 - Enhanced graph algorithms (flood fill, path counting, union-find)
 - Extended input parsing utilities
+- **New**: Range operations module (merge, intersect, subtract)
+- **New**: Math utilities (GCD, LCM, primes, modular arithmetic)
 - Breaking: Coord now uses x,y instead of row,col attributes
 
 ## License

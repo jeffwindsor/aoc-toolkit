@@ -173,7 +173,7 @@ def bfs_grid_path(
     """
     neighbors_func, goal_func = _create_grid_search_functions(grid, end, walkable_values)
     result = bfs(start, neighbors_func, goal_func)
-    return result if isinstance(result, list) else []
+    return result if result else None
 
 
 def dfs_grid_path(
@@ -312,8 +312,8 @@ def flood_fill(
 def flood_fill_mark(
     grid: Grid,
     start: Coord,
-    walkable_values: set[Any],
     mark_value: Any,
+    walkable_values: set[Any],
     directions: list[Coord] | None = None,
 ) -> int:
     """
@@ -325,8 +325,8 @@ def flood_fill_mark(
     Args:
         grid: Grid instance to modify
         start: Starting coordinate for flood fill
-        walkable_values: Set of grid values that can be traversed
         mark_value: Value to mark visited cells with
+        walkable_values: Set of grid values that can be traversed
         directions: Direction vectors to use (default: DIRECTIONS_CARDINAL for 4-way)
 
     Returns:
@@ -334,7 +334,7 @@ def flood_fill_mark(
 
     Example:
         >>> grid = Grid([['#', '.', '#'], ['.', '.', '.'], ['#', '.', '#']])
-        >>> count = flood_fill_mark(grid, Coord(1, 1), {'.'}, 'X')
+        >>> count = flood_fill_mark(grid, Coord(1, 1), 'X', {'.'})
         >>> count
         5
         >>> grid[Coord(1, 1)]
@@ -354,32 +354,32 @@ def flood_fill_mark(
 
 def count_paths_dag(
     start: Any,
-    target: Any,
     neighbors_func: Callable[[Any], list[Any]],
+    goal_func: Callable[[Any], bool],
 ) -> int:
     """
-    Count all paths from start to target in a directed acyclic graph (DAG).
+    Count all paths from start to goal in a directed acyclic graph (DAG).
 
     Uses memoization for efficient counting. Assumes the graph is acyclic.
 
     Args:
         start: Starting node
-        target: Target node
         neighbors_func: Function that returns list of neighbor nodes
+        goal_func: Function that returns True when goal is reached
 
     Returns:
-        Number of distinct paths from start to target
+        Number of distinct paths from start to goal
 
     Example:
         >>> graph = {'A': ['B', 'C'], 'B': ['D'], 'C': ['D'], 'D': []}
-        >>> count_paths_dag('A', 'D', lambda n: graph.get(n, []))
+        >>> count_paths_dag('A', lambda n: graph.get(n, []), lambda n: n == 'D')
         2
     """
     from functools import lru_cache
 
     @lru_cache(maxsize=None)
     def count(current):
-        if current == target:
+        if goal_func(current):
             return 1
         return sum(count(neighbor) for neighbor in neighbors_func(current))
 
@@ -388,29 +388,29 @@ def count_paths_dag(
 
 def count_paths_cyclic(
     start: Any,
-    target: Any,
     neighbors_func: Callable[[Any], list[Any]],
+    goal_func: Callable[[Any], bool],
 ) -> int:
     """
-    Count all paths from start to target in a graph that may contain cycles.
+    Count all paths from start to goal in a graph that may contain cycles.
 
     Uses backtracking to avoid revisiting nodes within the same path.
 
     Args:
         start: Starting node
-        target: Target node
         neighbors_func: Function that returns list of neighbor nodes
+        goal_func: Function that returns True when goal is reached
 
     Returns:
-        Number of distinct paths from start to target
+        Number of distinct paths from start to goal
 
     Example:
         >>> graph = {'A': ['B', 'C'], 'B': ['C'], 'C': ['A', 'D'], 'D': []}
-        >>> count_paths_cyclic('A', 'D', lambda n: graph.get(n, []))
+        >>> count_paths_cyclic('A', lambda n: graph.get(n, []), lambda n: n == 'D')
         2
     """
     def count(current, visited):
-        if current == target:
+        if goal_func(current):
             return 1
         visited.add(current)
         total = sum(
@@ -478,23 +478,39 @@ def find_max_clique(graph: dict[Any, set[Any]]) -> set[Any]:
 
 
 class UnionFind:
-    def __init__(self, n):
-        self.parent = list(range(n))
-        self.rank = [0] * n
-        self.size = [1] * n
+    """
+    Union-Find (Disjoint Set Union) data structure for tracking connected components.
+
+    Supports dynamic element addition and works with any hashable type.
+    Uses path compression and union by rank for efficiency.
+    """
+
+    def __init__(self):
+        self.parent = {}
+        self.rank = {}
+        self.size = {}
 
     def find(self, x):
+        """Find the root of the set containing x with path compression."""
+        # Auto-add new elements
+        if x not in self.parent:
+            self.parent[x] = x
+            self.rank[x] = 0
+            self.size[x] = 1
+
         if self.parent[x] != x:
             self.parent[x] = self.find(self.parent[x])
         return self.parent[x]
 
     def union(self, x, y):
+        """Union the sets containing x and y. Returns True if they were in different sets."""
         root_x = self.find(x)
         root_y = self.find(y)
 
         if root_x == root_y:
             return False
 
+        # Union by rank
         if self.rank[root_x] < self.rank[root_y]:
             self.parent[root_x] = root_y
             self.size[root_y] += self.size[root_x]
@@ -509,17 +525,19 @@ class UnionFind:
         return True
 
     def get_component_sizes(self):
+        """Get a dictionary mapping each root to its component size."""
         sizes = {}
-        for i in range(len(self.parent)):
-            root = self.find(i)
+        for element in list(self.parent.keys()):
+            root = self.find(element)
             if root not in sizes:
                 sizes[root] = self.size[root]
-        return list(sizes.values())
+        return sizes
 
     def count_components(self):
+        """Count the number of disjoint components."""
         roots = set()
-        for i in range(len(self.parent)):
-            roots.add(self.find(i))
+        for element in list(self.parent.keys()):
+            roots.add(self.find(element))
         return len(roots)
 
 

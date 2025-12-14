@@ -574,9 +574,9 @@ class TestGridMethods(unittest.TestCase):
         self.assertIsInstance(result, Grid)
         self.assertEqual(result.size.height, 3)
         self.assertEqual(result.size.width, 3)
-        self.assertEqual(result[Coord(0, 0)], 'A')
-        self.assertEqual(result[Coord(1, 1)], 'E')
-        self.assertEqual(result[Coord(2, 2)], 'I')
+        self.assertEqual(result[Coord.from_rc(0, 0)], 'A')
+        self.assertEqual(result[Coord.from_rc(1, 1)], 'E')
+        self.assertEqual(result[Coord.from_rc(2, 2)], 'I')
 
     def test_as_grid_variable_width(self):
         """Test as_grid with variable line lengths."""
@@ -595,8 +595,8 @@ class TestGridMethods(unittest.TestCase):
 
         self.assertIsInstance(result, Grid)
         self.assertEqual(result.size.height, 1)
-        self.assertEqual(result[Coord(0, 0)], 'H')
-        self.assertEqual(result[Coord(0, 4)], 'O')
+        self.assertEqual(result[Coord.from_rc(0, 0)], 'H')
+        self.assertEqual(result[Coord.from_rc(0, 4)], 'O')
 
     def test_as_int_grid_basic(self):
         """Test as_int_grid with digit characters."""
@@ -607,9 +607,9 @@ class TestGridMethods(unittest.TestCase):
         self.assertIsInstance(result, Grid)
         self.assertEqual(result.size.height, 3)
         self.assertEqual(result.size.width, 3)
-        self.assertEqual(result[Coord(0, 0)], 0)
-        self.assertEqual(result[Coord(1, 1)], 4)
-        self.assertEqual(result[Coord(2, 2)], 8)
+        self.assertEqual(result[Coord.from_rc(0, 0)], 0)
+        self.assertEqual(result[Coord.from_rc(1, 1)], 4)
+        self.assertEqual(result[Coord.from_rc(2, 2)], 8)
 
     def test_as_int_grid_with_non_digits(self):
         """Test as_int_grid with non-digit characters using default empty_value."""
@@ -618,9 +618,9 @@ class TestGridMethods(unittest.TestCase):
         result = parser.as_int_grid()
 
         self.assertIsInstance(result, Grid)
-        self.assertEqual(result[Coord(0, 0)], 0)
-        self.assertEqual(result[Coord(0, 1)], -1)  # default empty_value
-        self.assertEqual(result[Coord(0, 2)], 2)
+        self.assertEqual(result[Coord.from_rc(0, 0)], 0)
+        self.assertEqual(result[Coord.from_rc(0, 1)], -1)  # default empty_value
+        self.assertEqual(result[Coord.from_rc(0, 2)], 2)
 
     def test_as_int_grid_custom_empty_value(self):
         """Test as_int_grid with custom empty_value."""
@@ -628,7 +628,7 @@ class TestGridMethods(unittest.TestCase):
         parser = Input.from_string("1.3\n4.6")
         result = parser.as_int_grid(empty_value=0)
 
-        self.assertEqual(result[Coord(0, 1)], 0)  # custom empty_value
+        self.assertEqual(result[Coord.from_rc(0, 1)], 0)  # custom empty_value
 
     def test_as_int_grid_single_line(self):
         """Test as_int_grid with single line."""
@@ -638,8 +638,8 @@ class TestGridMethods(unittest.TestCase):
 
         self.assertIsInstance(result, Grid)
         self.assertEqual(result.size.height, 1)
-        self.assertEqual(result[Coord(0, 0)], 1)
-        self.assertEqual(result[Coord(0, 4)], 5)
+        self.assertEqual(result[Coord.from_rc(0, 0)], 1)
+        self.assertEqual(result[Coord.from_rc(0, 4)], 5)
 
 
 class TestColumnsMethods(unittest.TestCase):

@@ -9,6 +9,9 @@ jobs:
   # First, run all tests
   test:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:

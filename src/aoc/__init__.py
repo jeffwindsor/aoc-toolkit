@@ -7,11 +7,12 @@ Organized into modules but accessible from top level for convenience:
 - graph: Graph algorithms (BFS, DFS, Dijkstra, max clique, flood fill, path counting)
 - input: Data reading and parsing (Input and Parser classes)
 - math: Number/math utilities
+- ranges: Range and interval operations
 - testing: Test framework
 
 Import styles supported:
     # Simple (recommended for puzzles)
-    from aoc import Coord, Grid, bfs, Input, run, TestCase
+    from aoc import Coord, Grid, bfs, Input, run, TestCase, merge_ranges, gcd, lcm
 
     # Explicit 2D (optional for clarity)
     from aoc.d2 import Coord, Grid, Dimension
@@ -25,6 +26,7 @@ from .d2 import *
 from .graph import *
 from .input import *
 from .math import *
+from .ranges import *
 from .testing import *
 
 # Explicit __all__ for clarity
@@ -58,6 +60,23 @@ __all__ = [
     "count_continuous_segments",
     "count_digits",
     "calculate_toggle_states",
+    "gcd",
+    "lcm",
+    "lcm_multiple",
+    "gcd_multiple",
+    "is_prime",
+    "primes_up_to",
+    "prime_factors",
+    "mod_inverse",
+    "chinese_remainder_theorem",
+    # From ranges
+    "merge_ranges",
+    "intersect_ranges",
+    "subtract_range",
+    "range_contains",
+    "range_overlaps",
+    "range_length",
+    "total_coverage",
     # From testing
     "TestCase",
     "run",
