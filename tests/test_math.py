@@ -1,7 +1,6 @@
 """Tests for math utilities."""
 
 import unittest
-import pytest
 from aoc.math import (
     count_continuous_segments,
     count_digits,
@@ -283,7 +282,7 @@ class TestModInverse(unittest.TestCase):
 
     def test_invalid_mod_inverse(self):
         """Test that ValueError is raised when inverse doesn't exist."""
-        with pytest.raises(ValueError):
+        with self.assertRaises(ValueError):
             mod_inverse(2, 4)  # GCD(2, 4) = 2, not coprime
 
 
